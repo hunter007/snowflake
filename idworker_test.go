@@ -5,13 +5,23 @@ import (
 	"time"
 )
 
-var n int64
-
 func BenchmarkIdWorker(b *testing.B) {
-	b.Run("IdWorker", benchmarkIdWorker)
+	b.Run("IdWorker-10", benchmark10IdWorker)
+	b.Run("IdWorker-100", benchmark100IdWorker)
 }
 
-func benchmarkIdWorker(b *testing.B) {
+func benchmark10IdWorker(b *testing.B) {
+	var workerID int64 = 10
+	lastTimestamp := time.Now().UnixMicro()
+	idWorker, _ := NewIdWorker(workerID, lastTimestamp)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = idWorker.NextID()
+	}
+}
+
+func benchmark100IdWorker(b *testing.B) {
 	var workerID int64 = 10
 	lastTimestamp := time.Now().UnixMicro()
 	idWorker, _ := NewIdWorker(workerID, lastTimestamp)
@@ -27,7 +37,7 @@ func TestIdWorker(t *testing.T) {
 	lastTimestamp := time.Now().UnixMilli() - 1
 	idWorker, _ := NewIdWorker(workerID, lastTimestamp)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		id, err := idWorker.NextID()
 		if err != nil {
 			t.Error(err)

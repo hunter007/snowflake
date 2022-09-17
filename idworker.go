@@ -31,7 +31,8 @@ func NewIdWorker(workerID, lastTimestamp int64) (IdWorker, error) {
 		return nil, errors.New("last timestamp too small")
 	}
 
-	return &snowflake{workerID: workerID, lastTimestamp: lastTimestamp}, nil
+	a := &snowflake{workerID: workerID, lastTimestamp: lastTimestamp}
+	return a, nil
 }
 
 type snowflake struct {
@@ -39,6 +40,7 @@ type snowflake struct {
 	sequence      int64
 	workerID      int64
 	lastTimestamp int64
+	value         int64
 }
 
 func (sf *snowflake) NextID() (int64, error) {
@@ -56,11 +58,15 @@ func (sf *snowflake) NextID() (int64, error) {
 			for nowTime <= sf.lastTimestamp {
 				nowTime = time.Now().UnixMilli()
 			}
+			sf.lastTimestamp = nowTime
+			sf.sequence = 0
+			sf.value = (nowTime-baseTime)<<timestampBits + sf.workerID<<sequenceBits
 		}
 	} else {
+		sf.lastTimestamp = nowTime
 		sf.sequence = 0
+		sf.value = (nowTime-baseTime)<<timestampBits + sf.workerID<<sequenceBits
 	}
 
-	sf.lastTimestamp = nowTime
-	return (nowTime-baseTime)<<timestampBits | sf.workerID<<sequenceBits | sf.sequence, nil
+	return sf.value | sf.sequence, nil
 }
